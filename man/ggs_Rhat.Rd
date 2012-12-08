@@ -1,8 +1,8 @@
-\name{ggs_compare_partial}
-\alias{ggs_compare_partial}
-\title{Density plots comparing the distribution of the whole chain with only its last part.}
+\name{ggs_Rhat}
+\alias{ggs_Rhat}
+\title{Dotplot of Potential Scale Reduction Factor (Rhat)}
 \usage{
-  ggs_compare_partial(D, family = NA, partial = 0.1)
+  ggs_Rhat(D, family = NA)
 }
 \arguments{
   \item{D}{Data frame whith the simulations}
@@ -13,19 +13,21 @@
   parameters with the same name but different numerical
   value between square brackets (as beta[1], beta[2],
   etc).}
-
-  \item{partial}{Percentage of the chain to compare to.
-  Defaults to the last 10 percent.}
 }
 \value{
   A \code{ggplot} object.
 }
 \description{
-  Density plots comparing the distribution of the whole
-  chain with only its last part.
+  Plot a dotplot of Potential Scale Reduction Factor
+  (Rhat), proposed by Gelman and Rubin (1992). The version
+  from the second edition of Bayesian Data Analysis
+  (Gelman, Carlin, Stein and Rubin) is used.
+}
+\details{
+  Notice that at least two chains are required.
 }
 \examples{
 data(samples)
-ggs_compare_partial(ggs(S, parallel=FALSE))
+ggs_Rhat(ggs(S, parallel=FALSE))
 }
 
