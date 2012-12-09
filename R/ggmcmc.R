@@ -1,18 +1,26 @@
-#' Wrapper for creating a single pdf file with all plots that ggmcmc can produce.
+#' Wrapper function that creates a single pdf file with all plots that ggmcmc can produce.
+#'
+#' \code{ggmcmc()} is simply a wrapper function that generates a pdf file with all the potential plots that the package can produce.
 #'
 #' Notice that caterpillar plots are only created when there are multiple parameters within the same family. A family of parameters is considered to be all parameters that have the same name (usually the same greek letter) but different number within square brackets (such as alpha[1], alpha[2], ...).
 #'
-#' @param D data frame whith the simulations, previously arranged using \code{\link{ggs}}
-#' @param file name of the file to create with the plots. By default, use "ggmcmc-output.pdf"
-#' @param param.page numerical, number of parameters to plot for each page. Defaults to 5.
-#' @param width width of the pdf display, in inches. Defaults to 7.
-#' @param height of the pdf display, in inches. Defaults to 10.
-#' @param ... other options for the pdf device
+#' @param D Data frame whith the simulations, previously arranged using \code{\link{ggs}}
+#' @param file Character vector with the name of the file to create. By default, use "ggmcmc-output.pdf"
+#' @param family Name of the family of parameters to plot, as given by a character vector or a regular expression. A family of parameters is considered to be any group of parameters with the same name but different numerical value between square brackets (as beta[1], beta[2], etc). 
+#' @param param.page Numerical, number of parameters to plot for each page. Defaults to 5.
+#' @param width Width of the pdf display, in inches. Defaults to 7.
+#' @param height Height of the pdf display, in inches. Defaults to 10.
+#' @param ... Other options passed to the pdf device.
 #' @export
 #' @examples
 #' data(samples)
 #' ggmcmc(ggs(S, parallel=FALSE))  # Directly from a coda object
-ggmcmc <- function(D, file="ggmcmc-output.pdf", param.page=5, width=7, height=10, ...) {
+ggmcmc <- function(D, file="ggmcmc-output.pdf", family=NA, param.page=5, width=7, height=10, ...) {
+  # Manage subsetting a family of parameters
+  if (!is.na(family)) {
+    D <- get_family(D, family=family)
+  }
+
   # Get the number of parameters
   n.param <- length(unique(D$Parameter))
 
@@ -84,6 +92,7 @@ ggmcmc <- function(D, file="ggmcmc-output.pdf", param.page=5, width=7, height=10
 
     cat("Plotting autocorrelation plots\n")
     for (p in 1:n.pages) print(ggs_autocorrelation(D[D$page==p,]))
+
   }
 
   ##
@@ -91,6 +100,12 @@ ggmcmc <- function(D, file="ggmcmc-output.pdf", param.page=5, width=7, height=10
   ##
   cat("Plotting crosscorrelation plot\n")
   print(ggs_crosscorrelation(D))
+
+  cat("Plotting Potential Scale Reduction Factors\n")
+  print(ggs_Rhat(D))
+
+  cat("Plotting Geweke Diagnostic\n")
+  print(ggs_geweke(D))
 
   ##
   ## Print caterpillar plots for each of the repeated parameters
@@ -105,7 +120,7 @@ ggmcmc <- function(D, file="ggmcmc-output.pdf", param.page=5, width=7, height=10
   n.family.members <- apply(ifelse(table(D$Parameter, Parameter.family) > 0, 1, 0), 2, sum)
   for (f in unique(Parameter.family)) {
     if (n.family.members[f] > 1) {
-      print(ggs_caterpillar(D[Parameter.family==f,]) + labs(title=f))
+      print(ggs_caterpillar(D, family=f, horizontal=TRUE) + labs(title=f))
     }
   }
 
