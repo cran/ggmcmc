@@ -1,0 +1,35 @@
+\name{ggs_rocplot}
+\alias{ggs_rocplot}
+\title{Receiver-Operator Characteristic (ROC) plot for models with binary outcomes}
+\usage{
+  ggs_rocplot(D, outcome, fully.bayesian = FALSE)
+}
+\arguments{
+  \item{D}{Data frame whith the simulations. Notice that
+  only the posterior outcomes are needed, and so either the
+  previous call to ggs() should have limited the family of
+  parameters to pass to the predicted outcomes.}
+
+  \item{outcome}{vector (or matrix or array) containing the
+  observed outcome variable. Currently only a vector is
+  supported.}
+
+  \item{fully.bayesian}{logical, false by default. When not
+  fully Bayesian, it uses the median of the predictions for
+  each observation by iteration. When TRUE the function
+  plots as many ROC curves as iterations. It uses a a lot
+  of CPU and needs more memory. Use it with caution.}
+}
+\value{
+  A \code{ggplot} object
+}
+\description{
+  Receiver-Operator Characteristic (ROC) plot for models
+  with binary outcomes
+}
+\examples{
+\dontrun{
+ggs_rocplot(S, outcome=y)
+}
+}
+
