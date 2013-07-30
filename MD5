@@ -1,10 +1,10 @@
-e0932d9aae301b908de761899044f002 *DESCRIPTION
-25203489daa43d9658f52787160f173b *NAMESPACE
-3e7a79b6d60abfaa91d1cee0cbd691ed *NEWS
+47dd25b913247d17d9fb930329043d13 *DESCRIPTION
+6ff60b41ee6382fe46b6f9276ad86ee4 *NAMESPACE
+8cbc3509fb04d3486f9eb955f9ad50d2 *NEWS
 4c25631fd9e563b6fadc1ae3e28035f6 *R/data.R
 249fb018a8fc19661d4e4366c6d10dae *R/functions.R
 f08ff3de15748d0d09d0c69d5bf92a92 *R/ggmcmc.R
-d43f87fb0e4f1ae9d73291a1d7da4fbf *R/ggs.R
+f8daae310b9636bb1c582b2e2a713a0b *R/ggs.R
 44b38da859f83357e5206c25a6312cee *R/ggs_Rhat.R
 87b49ff8b1fcb17a1fa0e40a45f07bfb *R/ggs_autocorrelation.R
 f629a24438c253a595b30d81f776a275 *R/ggs_caterpillar.R
@@ -15,7 +15,7 @@ b105c54904685c05bb06864695495419 *R/ggs_density.R
 0c0fb3ee2560940fc4a2e64b73142d76 *R/ggs_histogram.R
 2a1750a8d37be195e86132f1c209d0d1 *R/ggs_ppmean.R
 18c30356074ef2cc1e5b7cae02e08f85 *R/ggs_ppsd.R
-226deb7f40947b47bc42427faf59a50c *R/ggs_rocplot.R
+8d14447f0cc62b2444865da213fb36cc *R/ggs_rocplot.R
 4388a17c449456377370e53b3e9032d9 *R/ggs_running.R
 95f6f020b1485caf9ba8559ecbc35d07 *R/ggs_separation.R
 5e4a5ff4c0f16fcc7fa609f0e214dda4 *R/ggs_traceplot.R
