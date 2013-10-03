@@ -34,8 +34,13 @@ get_family <- function(D, family=NA) {
 #' @return A vector with the spectral density estimate at zero frequency
 #' @export
 sde0f <- function(x) {
-  m.ar <- ar(x)
-  v0 <- m.ar$var.pred / (1-sum(m.ar$ar))^2
+  # In case of series not varying, set v0 to 0
+  if (length(unique(x))>1) {
+    m.ar <- ar(x)
+    v0 <- m.ar$var.pred / (1-sum(m.ar$ar))^2
+  } else {
+    v0 <- 0
+  }
   return(v0)
 }
 
@@ -52,7 +57,25 @@ calc.bin <- function(x, bins=bins) {
   mn <- min(x)
   mx <- max(x)
   bw <- (mx-mn)/bins
-  z <- ggplot2:::bin(x, binwidth=bw)
-  return(z[,c("x", "width", "count")])
+  z <- seq(mn, mx, by=bw)
+  count <- as.vector(table(cut(x, breaks=z)))
+  return(data.frame(x=z[-length(z)], width=bw, count=count))
 }
 
+#' Generate a factor with unequal number of repetitions
+#'
+#' Generate a factor with levels of unequal length
+#'
+#' @param n number of levels
+#' @param k number of repetitions
+#' @param labels optional vector of labels
+#' @return A factor
+#' @export
+gl.unq <- function (n, k, labels=1:n) {
+  x <- NULL
+  for (i in 1:n) {
+    x <- append(x, rep(i, length.out=k[i]))
+  }
+  x <- factor(x, levels=1:n, labels=labels)
+  return(x)
+}
