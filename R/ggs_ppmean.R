@@ -1,4 +1,4 @@
-#' Posterior predictive plot comparing the outcome vs the posterior means.
+#' Posterior predictive plot comparing the outcome mean vs the distribution of the predicted posterior means.
 #'
 #' Histogram with the distribution of the predicted posterior means, compared with the mean of the observed outcome.
 #'
@@ -10,10 +10,8 @@
 #' @return A \code{ggplot} object.
 #' @export
 #' @examples
-#' \dontrun{
-#' data(samples)
-#' ggs_ppmean(ggs(S, family="y"), outcome="y")
-#' }
+#' data(linear)
+#' ggs_ppmean(ggs(s.y.rep), outcome=y)
 ggs_ppmean <- function(D, outcome, family=NA, bins=30) {
   # Manage subsetting a family of parameters
   if (!is.na(family)) {
@@ -26,11 +24,12 @@ ggs_ppmean <- function(D, outcome, family=NA, bins=30) {
     stop("The length of the outcome must be equal to the number of Parameters of the ggs object.")
   }
   # Calculate the posterior predictive means at each iteration
-  ppM <- ddply(D, .(Iteration), summarize, m=mean(value),
-    .parallel=attributes(D)$parallel)
+  ppM <- D %>%
+    group_by(Iteration) %>%
+    summarize(m=mean(value))
   m <- mean(outcome, na.rm=TRUE)
   # Calculate binwidths
-  ppMbw <- calc.bin(ppM$m, bins=bins)
+  ppMbw <- calc_bin(ppM$m, bins=bins)
   names(ppMbw)[names(ppMbw)=="x"] <- "Posterior predictive mean"
   # Plot
   f <- ggplot(ppMbw, aes(x=`Posterior predictive mean`, y=count, width=width)) +

@@ -1,6 +1,6 @@
-#' Posterior predictive plot comparing the outcome vs the posterior standard deviations.
+#' Posterior predictive plot comparing the outcome standard deviation vs the distribution of the predicted posterior standard deviations.
 #'
-#' Histogram with the distribution of the predicted posterior standard deviations, compared with the standard deviationsof the observed outcome.
+#' Histogram with the distribution of the predicted posterior standard deviations, compared with the standard deviations of the observed outcome.
 #'
 #' @param D Data frame whith the simulations. Notice that only the posterior outcomes are needed, and so either the ggs() call limits the parameters to the outcomes or the user provides a family of parameters to limit it.
 #' @param outcome vector (or matrix or array) containing the observed outcome variable. Currently only a vector is supported.
@@ -10,10 +10,8 @@
 #' @return A \code{ggplot} object.
 #' @export
 #' @examples
-#' \dontrun{
-#' data(samples)
-#' ggs_ppsd(ggs(S, family="y"), outcome="y")
-#' }
+#' data(linear)
+#' ggs_ppsd(ggs(s.y.rep), outcome=y)
 ggs_ppsd <- function(D, outcome, family=NA, bins=30) {
   # Manage subsetting a family of parameters
   if (!is.na(family)) {
@@ -26,11 +24,12 @@ ggs_ppsd <- function(D, outcome, family=NA, bins=30) {
     stop("The length of the outcome must be equal to the number of Parameters of the ggs object.")
   }
   # Calculate the posterior predictive means at each iteration
-  ppSD <- ddply(D, .(Iteration), summarize, sd=sd(value),
-    .parallel=attributes(D)$parallel)
+  ppSD <- D %>%
+    group_by(Iteration) %>%
+    summarize(sd=sd(value))
   sd <- sd(outcome, na.rm=TRUE)
   # Calculate binwidths
-  ppSDbw <- calc.bin(ppSD$sd, bins=bins)
+  ppSDbw <- calc_bin(ppSD$sd, bins=bins)
   names(ppSDbw)[names(ppSDbw)=="x"] <- "Posterior predictive standard deviation"
   # Plot
   f <- ggplot(ppSDbw, aes(x=`Posterior predictive standard deviation`, y=count, width=width)) +

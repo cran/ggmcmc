@@ -8,8 +8,8 @@
 #' @return a \code{ggplot} object.
 #' @export
 #' @examples
-#' data(samples)
-#' ggs_crosscorrelation(ggs(S))
+#' data(linear)
+#' ggs_crosscorrelation(ggs(s))
 ggs_crosscorrelation <- function(D, family=NA, absolute_scale=TRUE) {
   # Manage subsetting a family of parameters
   if (!is.na(family)) {
@@ -18,17 +18,18 @@ ggs_crosscorrelation <- function(D, family=NA, absolute_scale=TRUE) {
   if (attributes(D)$nParameters <= 1) {
     stop("Can't calculate crosscorrelations with a single chain")
   } 
-  X <- dcast(D, Iteration + Chain ~ Parameter)
+  X <- spread(D, Parameter, value)
   # Chain management is not easy
-  bc.cc <- melt(cor(as.matrix(X[,-c(1, 2), drop=FALSE])))
-  # Need to revert parameter names
-  bc.cc$Var1 <- factor(bc.cc$Var1, labels=levels(D$Parameter))
-  bc.cc$Var2 <- factor(bc.cc$Var2, labels=levels(D$Parameter))
+  bc.cc <- as.data.frame.table(
+    cor(as.matrix(X[,-c(1, 2), drop=FALSE])),
+    responseName="value")
+  # Diagonals are avoided
   bc.cc$value[bc.cc$Var1==bc.cc$Var2] <- NA
   # Plot
   f <- ggplot(bc.cc, aes(x=Var1, y=Var2)) +
     geom_tile(aes(fill=value)) +
-    xlab("") + ylab("") + theme(axis.text.x=element_text(angle=90))
+    xlab("") + ylab("") +
+    theme(axis.text.x=element_text(angle=90, hjust=1, vjust=0.5))
     if (absolute_scale) {
       f <- f + scale_fill_gradient2(limits=c(-1, 1)) 
     } else {

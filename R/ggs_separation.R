@@ -1,17 +1,16 @@
 #' Separation plot for models with binary response variables
 #'
-#' @param D Data frame whith the simulations. Notice that only the posterior outcomes are needed, and so either the previous call to ggs() should have limited the family of parameters to pass to the predicted outcomes.
+#' @param D Data frame whith the simulations. Notice that only the fitted / expected posterior outcomes are needed, and so either the previous call to ggs() should have limited the family of parameters to only pass the fitted / expected values. See the example below.
 #' @param outcome vector (or matrix or array) containing the observed outcome variable. Currently only a vector is supported.
 #' @param fully_bayesian logical, FALSE by default. Currently not implemented
 #' @param minimalist logical, FALSE by default. It returns a minimalistic version of the figure with the bare minimum elements, suitable for being used inline as suggested by Greenhill, Ward and Sacks citing Tufte.
 #'
 #' @return A \code{ggplot} object
 #' @references Greenhill, Ward and Sacks (2011): The separation plot: a new visual method for evaluating the fit of binary models. American Journal of Political Science, vol 55, number 4, pg 991-1002.
-#' @examples
-#' \dontrun{
-#' ggs_separation(S, outcome=y)
-#' }
 #' @export
+#' @examples
+#' data(binary)
+#' ggs_separation(ggs(s.binary, family="mu"), outcome=y.binary)
 
 ggs_separation <- function(D, outcome, fully_bayesian=FALSE, minimalist=FALSE) {
   if (fully_bayesian) {
@@ -20,16 +19,19 @@ ggs_separation <- function(D, outcome, fully_bayesian=FALSE, minimalist=FALSE) {
   # Calculate the prediction bands
   if (fully_bayesian) {
   } else {
-    S <- ddply(D, .(Parameter), summarize,
-      low=quantile(value, 0.025),
-      median=quantile(value, 0.5),
-      high=quantile(value, 0.975),
-      .parallel=attributes(D)$parallel)
+    q <- data.frame(
+      qs=c("low", "median", "high"),
+      q=c(0.025, 0.5, 0.975))
+    S <- D %>%
+      group_by(Parameter) %>%
+      do(data.frame(qs=q$qs, q=quantile(.$value, prob=q$q))) %>%
+      ungroup() %>%
+      spread(qs, q)
   }
-  S <- merge(S, data.frame(Observed=outcome, Parameter=unique(D$Parameter)))
   # Sort the observations by predicted value
-  S <- S[order(S$median),]
-  S <- cbind(S, id=1:dim(S)[1])
+  S <- inner_join(S, data_frame(Observed=outcome, Parameter=unique(D$Parameter)), by="Parameter") %>%
+    arrange(median) %>%
+    mutate(id=1:dim(S)[1])
   # Calculate expected number of events
   if (fully_bayesian) {
   } else {

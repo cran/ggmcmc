@@ -5,7 +5,7 @@
 #' @param R data frame with the 'value' (predicted probability) and the observed 'Outcome'.
 #' @return A data frame with the Sensitivity and the Specificity.
 #' @export
-roc.calc <- function(R) {
+roc_calc <- function(R) {
   value <- R$value
   Observed <- R$Observed
   point <- seq(0, 1, length.out=dim(R)[1])
@@ -25,24 +25,27 @@ roc.calc <- function(R) {
 #' @return A \code{ggplot} object
 #' @export
 #' @examples
-#' \dontrun{
-#' ggs_rocplot(S, outcome=y)
-#' }
+#' data(binary)
+#' ggs_rocplot(ggs(s.binary, family="mu"), outcome=y.binary)
 ggs_rocplot <- function(D, outcome, fully_bayesian=FALSE) {
   # Create a single object that stores the predicted 'value' and the observed 'Outcome'
-  D.observed <- data.frame(Observed=outcome, Parameter=unique(D$Parameter))
+  D.observed <- tbl_df(data.frame(Observed=outcome, Parameter=unique(D$Parameter)))
   # Work with the full posterior or with the expected medians, to economize memory
   if (fully_bayesian) {
     D.predicted <- D
   } else {
-    D.predicted <- ddply(D, .(Parameter, Chain), summarize, value=quantile(value, 0.5),
-      .parallel=attributes(D)$parallel)
+    D.predicted <- D %>%
+      group_by(Parameter, Chain) %>%
+      summarize(value=quantile(value, 0.5))
   }
-  roc.df <- merge(D.predicted, D.observed)
-  # Compute the roc curve using the roc.calc function
-  roc.df <- cbind(roc.df, roc.calc(roc.df[,c("value", "Observed")]))
+  roc.df <- left_join(D.predicted, D.observed, by="Parameter")
+  # Compute the roc curve using the roc_calc function
+  # As of dplyr 0.2 cbind must be used.
+  # Later on, this may change with cbind_list
+  roc.df <- cbind(roc.df, roc_calc(dplyr::select(roc.df, value, Observed)))
   # Sort it to be sure that the figure is plotted nicely
-  roc.df <- roc.df[order(roc.df$Sensitivity, roc.df$Specificity, decreasing=FALSE),]
+  roc.df <- tbl_df(roc.df) %>%
+    filter(Sensitivity, Specificity)
   # Plot differently if it's a fully Bayesian figure or not
   if (fully_bayesian) {
     # Start plotting

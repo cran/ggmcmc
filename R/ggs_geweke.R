@@ -10,8 +10,8 @@
 #' @return A \code{ggplot} object.
 #' @export
 #' @examples
-#' data(samples)
-#' ggs_geweke(ggs(S))
+#' data(linear)
+#' ggs_geweke(ggs(s))
 ggs_geweke <- function(D, family=NA, frac1=0.1, frac2=0.5, shadow_limit=TRUE) {
   # Manage subsetting a family of parameters
   if (!is.na(family)) {
@@ -27,30 +27,44 @@ ggs_geweke <- function(D, family=NA, frac1=0.1, frac2=0.5, shadow_limit=TRUE) {
   # Take subsequences of the chains
   window.1 <- 1:trunc(attributes(D)$nIterations * frac1)
   window.2 <- trunc(attributes(D)$nIterations * frac2):attributes(D)$nIterations
-  D.geweke.first <- cbind(
-    D[!is.na(match(D$Iteration, window.1)),],
-    part="first")
-  D.geweke.last <- cbind(
-    D[!is.na(match(D$Iteration, window.2)),],
-    part="last")
-  D.geweke <- rbind(D.geweke.first, D.geweke.last)
+  D.geweke.first <- mutate(filter(D, Iteration <= max(window.1)), part="first")
+  D.geweke.last <- mutate(filter(D, Iteration <= max(window.2)), part="last")
+  D.geweke <- rbind_list(D.geweke.first, D.geweke.last)
   # Compute means, spectral densities and N's
-  D.geweke <- ddply(D.geweke, .(Parameter, Chain, part), summarize,
-    m=mean(value),
-    sde0f=sde0f(value),
-    n=length(value),
-    .parallel=attributes(D)$parallel)
+  D.geweke <- D.geweke %>%
+    group_by (Parameter, Chain, part) %>%
+    summarize(m=mean(value), sde0f=sde0f(value), n=n())
   # Cast the dataframe in pieces to have the data arranged by parameter, chain
   # and first and last
-  M <- dcast(D.geweke, Parameter + Chain ~ part, value.var="m")
-  N <- dcast(D.geweke, Parameter + Chain ~ part, value.var="n")
-  SDE0F <- dcast(D.geweke, Parameter + Chain ~ part, value.var="sde0f")
+  M <- D.geweke %>%
+    dplyr::select(-sde0f, -n) %>%
+    ungroup() %>%
+    spread(part, m)
+  N <- D.geweke %>%
+    dplyr::select(-sde0f, -m) %>%
+    ungroup() %>%
+    spread(part, n)
+  SDE0F <- D.geweke %>%
+    dplyr::select(-m, -n) %>%
+    ungroup() %>%
+    spread(part, sde0f)
   # Reorganize the z scores
   Z <- data.frame(Parameter=M$Parameter, Chain=M$Chain,
     z= (M$first - M$last) /
       sqrt( (SDE0F$first/N$first) + (SDE0F$last/N$last) ) )
+  # Check that there are no Inf values, otherwise raise a message and continue
+  # having converted it into NA
+  Zinf <- which(is.infinite(Z$z))
+  if (length(Zinf) > 0) {
+    for (nas in 1:length(Zinf)) {
+      warning(paste(
+        "Infinite value in the z score for Parameter ", Z$Parameter[Zinf[nas]],
+        ", Chain ", Z$Chain[Zinf[nas]], ".", sep=""))
+    }
+    Z$z[Zinf] <- NA
+  }
   # Calculate ranges of z-scores for plotting
-  rz <- range(Z$z)
+  rz <- range(Z$z, na.rm=TRUE)
   rz[1] <- ifelse(rz[1] < -2.5, rz[1], -2.5)
   rz[2] <- ifelse(rz[2] > 2.5, rz[2], 2.5)
   # Plot

@@ -11,13 +11,14 @@
 #' @param param_page Numerical, number of parameters to plot for each page. Defaults to 5.
 #' @param width Width of the pdf display, in inches. Defaults to 7.
 #' @param height Height of the pdf display, in inches. Defaults to 10.
+#' @param simplify_traceplot Numerical. A percentage of iterations to keep in the time series. It is an option intended only for the purpose of saving time and resources when doing traceplots. It is not a thin operation, because it is not regular. It must be used with care.
 #' @param ... Other options passed to the pdf device.
 #' @export
 #' @examples
-#' data(samples)
-#' ggmcmc(ggs(S))  # Directly from a coda object
+#' data(linear)
+#' ggmcmc(ggs(s))  # Directly from a coda object
 ggmcmc <- function(D, file="ggmcmc-output.pdf", family=NA, plot=NULL,
-  param_page=5, width=7, height=10, ...) {
+  param_page=5, width=7, height=10, simplify_traceplot=NULL, ...) {
   # Manage subsetting a family of parameters
   if (!is.na(family)) {
     D <- get_family(D, family=family)
@@ -48,7 +49,7 @@ ggmcmc <- function(D, file="ggmcmc-output.pdf", family=NA, plot=NULL,
 
     if (is.null(plot) | length(grep("traceplot", plot)) > 0) {
       cat("Plotting traceplots\n")
-      print(ggs_traceplot(D))
+      print(ggs_traceplot(D, simplify=simplify_traceplot))
     }
 
     if (is.null(plot) | length(grep("running", plot)) > 0) {
@@ -70,9 +71,10 @@ ggmcmc <- function(D, file="ggmcmc-output.pdf", family=NA, plot=NULL,
     # Arrange manually the plots to fit in the pages
     # Create a new variable that sets each parameter in a specified page number
     # Preserve the attributes of the original object
+    D.original <- D
     old.atrib <- attributes(D)
     n.pages <- ceiling(n.param / param_page)
-    parameters <- unique(D$Parameter)
+    parameters <- sort(unique(D$Parameter))
     D.parameters <- data.frame(Parameter=parameters, 
       page=as.numeric(as.character(gl(n.pages, param_page, length=length(parameters)))))
     new.atrib <- old.atrib
@@ -87,7 +89,7 @@ ggmcmc <- function(D, file="ggmcmc-output.pdf", family=NA, plot=NULL,
     # The following lines would be ideal, but they don't work yet
     #ddply(D, .variables="page", .fun=function(x) {
     #  print(ggs_density(x))
-    #}, .parallel=TRUE)
+    #})
     #ddply(D, .(page), .fun=ggs_histogram(D))
 
     # So just do it manually
@@ -103,29 +105,59 @@ ggmcmc <- function(D, file="ggmcmc-output.pdf", family=NA, plot=NULL,
 
     if (is.null(plot) | length(grep("density", plot)) > 0) {
       cat("Plotting density plots\n")
-      for (p in 1:n.pages) print(ggs_density(D[D$page==p,]))
+      for (p in 1:n.pages) {
+        Dsub <- D[D$page==p,]
+        Dsub$Parameter <- as.factor(as.character(Dsub$Parameter))
+        attr(Dsub, "nChains") <- attributes(D)$nChains
+        print(ggs_density(Dsub))
+      }
     }
 
     if (is.null(plot) | length(grep("traceplot", plot)) > 0) {
       cat("Plotting traceplots\n")
-      for (p in 1:n.pages) print(ggs_traceplot(D[D$page==p,]))
+      for (p in 1:n.pages) {
+        Dsub <- D[D$page==p,]
+        Dsub$Parameter <- as.factor(as.character(Dsub$Parameter))
+        attr(Dsub, "nChains") <- attributes(D)$nChains
+        attr(Dsub, "nThin") <- attributes(D)$nThin
+        attr(Dsub, "nBurnin") <- attributes(D)$nBurnin
+        print(ggs_traceplot(Dsub, simplify=simplify_traceplot))
+      }
     }
 
     if (is.null(plot) | length(grep("running", plot)) > 0) {
       cat("Plotting running means\n")
-      for (p in 1:n.pages) print(ggs_running(D[D$page==p,]))
+      for (p in 1:n.pages) {
+        Dsub <- D[D$page==p,]
+        Dsub$Parameter <- as.factor(as.character(Dsub$Parameter))
+        attr(Dsub, "nChains") <- attributes(D)$nChains
+        attr(Dsub, "nThin") <- attributes(D)$nThin
+        attr(Dsub, "nBurnin") <- attributes(D)$nBurnin
+        print(ggs_running(Dsub))
+      }
     }
 
     if (is.null(plot) | length(grep("compare_partial", plot)) > 0) {
       cat("Plotting comparison of partial and full chain\n")
-      for (p in 1:n.pages) print(ggs_compare_partial(D[D$page==p,]))
+      for (p in 1:n.pages) {
+        Dsub <- D[D$page==p,]
+        Dsub$Parameter <- as.factor(as.character(Dsub$Parameter))
+        attr(Dsub, "nChains") <- attributes(D)$nChains
+        print(ggs_compare_partial(Dsub))
+      }
     }
 
     if (is.null(plot) | length(grep("autocorrelation", plot)) > 0) {
       cat("Plotting autocorrelation plots\n")
-      for (p in 1:n.pages) print(ggs_autocorrelation(D[D$page==p,]))
+      for (p in 1:n.pages) {
+        Dsub <- D[D$page==p,]
+        Dsub$Parameter <- as.factor(as.character(Dsub$Parameter))
+        attr(Dsub, "nIterations") <- attributes(D)$nIterations
+        attr(Dsub, "nChains") <- attributes(D)$nChains
+        print(ggs_autocorrelation(Dsub))
+      }
     }
-
+    D <- D.original
   }
 
   ##
@@ -162,7 +194,7 @@ ggmcmc <- function(D, file="ggmcmc-output.pdf", family=NA, plot=NULL,
     n.family.members <- apply(ifelse(table(D$Parameter, Parameter.family) > 0, 1, 0), 2, sum)
     for (f in unique(Parameter.family)) {
       if (n.family.members[f] > 1) {
-        print(ggs_caterpillar(D, family=f, horizontal=TRUE) + labs(title=f))
+        print(ggs_caterpillar(D, family=paste("^", f, "\\[", sep=""), horizontal=TRUE) + labs(title=f))
       }
     }
   }

@@ -6,11 +6,11 @@ Description: ggmcmc is a tool for assessing and diagnosing convergence of
     results from full MCMC analysis. The package also facilitates the graphical
     interpretation of models by providing flexible functions to plot the
     results against observed variables.
-Version: 0.5.1
+Version: 0.6
 Maintainer: Xavier Fernández i Marín <xavier.fim@gmail.com>
 Author: Xavier Fernández i Marín <xavier.fim@gmail.com>
-Depends: plyr, reshape2, ggplot2
-Suggests: foreach, rjags, coda, rstan
+Depends: dplyr, tidyr, ggplot2
+Suggests: coda
 License: GPL-2
 URL: http://xavier-fim.net/packages/ggmcmc
 Encoding: UTF-8
@@ -20,7 +20,7 @@ Collate: 'ggmcmc.R' 'ggs.R' 'ggs_autocorrelation.R'
         'ggs_traceplot.R' 'data.R' 'help.R' 'functions.R' 'ggs_Rhat.R'
         'ggs_geweke.R' 'ggs_caterpillar.R' 'ggs_separation.R'
         'globals.R' 'ggs_ppmean.R' 'ggs_ppsd.R' 'ggs_rocplot.R'
-Packaged: 2013-10-03 17:15:38 UTC; xavier
+Packaged: 2014-12-30 11:39:08 UTC; xavier
 NeedsCompilation: no
 Repository: CRAN
-Date/Publication: 2013-10-03 19:41:00
+Date/Publication: 2014-12-30 13:34:52
