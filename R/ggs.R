@@ -16,6 +16,9 @@
 #' # a coda object called S
 #' data(linear)
 #' S <- ggs(s)        # s is a coda object
+#'
+#' # Get samples from 'beta' parameters only
+#' S <- ggs(s, family = "beta")
 ggs <- function(S, family=NA, description=NA, burnin=TRUE, par_labels=NA, inc_warmup=FALSE, stan_include_auxiliar=FALSE) {
   processed <- FALSE # set by default that there has not been any processed samples
   #
@@ -23,20 +26,32 @@ ggs <- function(S, family=NA, description=NA, burnin=TRUE, par_labels=NA, inc_wa
   # Manage stan output first because it is firstly converted into an mcmc.list
   #
   if (class(S)=="stanfit") {
-    if (inc_warmup) warning("inc_warmup must be 'FALSE', so it is ignored.")
-    D <- as.data.frame.table(as.array(S), responseName="value")
-    names(D)[1:3] <- c("Iteration", "Chain", "Parameter")
-    D$Chain <- as.integer(gsub("chain:", "", D$Chain))
-    D$Iteration <- as.integer(D$Iteration)
+    # Extract chain by chain
+    nChains <- S@sim$chains
+    D <- NULL
+    for (l in 1:nChains) {
+      sdf <- as.data.frame(S@sim$samples[[l]])
+      sdf$Iteration <- 1:dim(sdf)[1]
+      s <- tidyr::gather(sdf, Parameter, value, -Iteration) %>%
+        dplyr::mutate(Chain = l) %>%
+        dplyr::select(Iteration, Chain, Parameter, value)
+      D <- rbind_list(D, s)
+    }
+    if (!inc_warmup) {
+      D <- dplyr::filter(D, Iteration > S@sim$warmup)
+      D$Iteration <- D$Iteration - S@sim$warmup
+      nBurnin <- S@sim$warmup
+    } else {
+      nBurnin <- 0
+    }
     # Exclude, by default, lp parameter
     if (!stan_include_auxiliar) {
-      D <- subset(D, Parameter!="lp__") # delete lp__
+      D <- dplyr::filter(D, Parameter!="lp__") # delete lp__
       D$Parameter <- factor(as.character(D$Parameter))
     }
-    nBurnin <- S@sim$warmup
     nThin <- S@sim$thin
     mDescription <- S@model_name
-    processed <- TRUE  # whether the object has been processed or not
+    processed <- TRUE
     D <- tbl_df(D)
   }
   #
@@ -49,8 +64,8 @@ ggs <- function(S, family=NA, description=NA, burnin=TRUE, par_labels=NA, inc_wa
       samples.c <- tbl_df(read.table(S[[i]], sep=",", header=TRUE,
         colClasses="numeric", check.names=FALSE))
       D <- rbind_list(D,
-        gather(samples.c, Parameter) %>%
-        mutate(Iteration=rep(1:(dim(samples.c)[1]), dim(samples.c)[2]), Chain=i) %>%
+        tidyr::gather(samples.c, Parameter) %>%
+        dplyr::mutate(Iteration=rep(1:(dim(samples.c)[1]), dim(samples.c)[2]), Chain=i) %>%
         dplyr::select(Iteration, Chain, Parameter, value))
     }
     # Exclude, by default, lp parameter and other auxiliar ones
@@ -76,7 +91,7 @@ ggs <- function(S, family=NA, description=NA, burnin=TRUE, par_labels=NA, inc_wa
           s <- S
         }
         # Process a single chain
-        D <- mutate(ggs_chain(s), Chain=1) %>%
+        D <- dplyr::mutate(ggs_chain(s), Chain=1) %>%
           dplyr::select(Iteration, Chain, Parameter, value)
         # Get information from mcpar (burnin period, thinning)
         nBurnin <- (attributes(s)$mcpar[1])-(1*attributes(s)$mcpar[3])
@@ -85,7 +100,7 @@ ggs <- function(S, family=NA, description=NA, burnin=TRUE, par_labels=NA, inc_wa
         # Process multiple chains
         for (l in 1:lS) {
           s <- S[l][[1]]
-          D <- rbind_list(D, mutate(ggs_chain(s), Chain=l))
+          D <- rbind_list(D, dplyr::mutate(ggs_chain(s), Chain=l))
         }
         D <- dplyr::select(D, Iteration, Chain, Parameter, value)
         # Get information from mcpar (burnin period, thinning). Taking the last
@@ -93,6 +108,7 @@ ggs <- function(S, family=NA, description=NA, burnin=TRUE, par_labels=NA, inc_wa
         nBurnin <- (attributes(s)$mcpar[1])-(1*attributes(s)$mcpar[3])
         nThin <- attributes(s)$mcpar[3]
       }
+      D <- dplyr::arrange(D, Parameter, Chain, Iteration)
     }
     # Set several attributes to the object, to avoid computations afterwards
     # Number of chains
@@ -142,15 +158,28 @@ ggs <- function(S, family=NA, description=NA, burnin=TRUE, par_labels=NA, inc_wa
         levels(D$Parameter)[which(levels(D$Parameter) %in% par_labels$Parameter)] <-
           as.character(par_labels$Label[
             match(levels(D$Parameter)[which(levels(D$Parameter) %in% par_labels$Parameter)], par_labels$Parameter)])
-        D <- left_join(D, data.frame(Parameter=par_labels$Label, ParameterOriginal=par_labels$Parameter),
+        D <- dplyr::left_join(D, data.frame(Parameter=par_labels$Label, ParameterOriginal=par_labels$Parameter),
           by="Parameter") %>%
-          select(Iteration, Chain, Parameter, value, ParameterOriginal)
+          dplyr::select(Iteration, Chain, Parameter, value, ParameterOriginal)
+        if (class(D$Parameter) == "character") {
+          D$Parameter <- factor(D$Parameter)
+        }
+        # Unfortunately, the attributes are not inherited in left_join(), so they have to be manually passed again
+        attr(D, "nChains") <- aD$nChains
+        attr(D, "nParameters") <- aD$nParameters
+        attr(D, "nIterations") <- aD$nIterations
+        attr(D, "nBurnin") <- aD$nBurnin
+        attr(D, "nThin") <- aD$nThin
+        attr(D, "description") <- aD$description
         # Keep the rest of the variables passed if the data frame has more than Parameter and Label
         if (dim(par_labels)[2] > 2) {
           aD <- attributes(D)
-          D <- left_join(D, select(tbl_df(par_labels), -Parameter), by=c("Parameter"="Label"))
+          D <- dplyr::left_join(D, dplyr::select(tbl_df(par_labels), -Parameter), by=c("Parameter"="Label"))
+          if (class(D$Parameter) == "character") {
+            D$Parameter <- factor(D$Parameter)
+          }
         }
-        # Unfortunately, the attributes are not inherited, so they have to be manually passed again
+        # Unfortunately, the attributes are not inherited in left_join(), so they have to be manually passed again (for second time).
         attr(D, "nChains") <- aD$nChains
         attr(D, "nParameters") <- aD$nParameters
         attr(D, "nIterations") <- aD$nIterations
@@ -183,7 +212,7 @@ ggs_chain <- function(s) {
 
   # Prepare the dataframe
   d <- data.frame(Iteration=iter, as.matrix(unclass(s)), check.names=FALSE)
-  D <- d %>% gather(Parameter, value, -Iteration)
+  D <- d %>% tidyr::gather(Parameter, value, -Iteration)
 
   # Return the modified data frame as a tbl_df to be used by dplyr
   D <- tbl_df(D)
