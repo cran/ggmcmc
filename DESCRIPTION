@@ -1,17 +1,19 @@
 Package: ggmcmc
 Title: Tools for Analyzing MCMC Simulations from Bayesian Inference
-Description: Tool for assessing and diagnosing convergence of
+Description: Tools for assessing and diagnosing convergence of
     Markov Chain Monte Carlo simulations, as well as for graphically display
     results from full MCMC analysis. The package also facilitates the graphical
     interpretation of models by providing flexible functions to plot the
     results against observed variables.
-Version: 0.7.1
+Version: 0.7.2
 Maintainer: Xavier Fernández i Marín <xavier.fim@gmail.com>
 Author: Xavier Fernández i Marín <xavier.fim@gmail.com>
 Depends: dplyr, tidyr, ggplot2, GGally
 Suggests: coda
 License: GPL-2
-URL: http://xavier-fim.net/packages/ggmcmc
+URL: http://xavier-fim.net/packages/ggmcmc,
+        https://github.com/xfim/ggmcmc
+BugReports: https://github.com/xfim/ggmcmc/issues
 Encoding: UTF-8
 Collate: 'ggmcmc.R' 'ggs.R' 'ggs_autocorrelation.R'
         'ggs_compare_partial.R' 'ggs_crosscorrelation.R'
@@ -21,6 +23,6 @@ Collate: 'ggmcmc.R' 'ggs.R' 'ggs_autocorrelation.R'
         'ggs_separation.R' 'globals.R' 'ggs_ppmean.R' 'ggs_ppsd.R'
         'ggs_rocplot.R'
 NeedsCompilation: no
-Packaged: 2015-07-29 16:19:09 UTC; xavier
+Packaged: 2015-09-03 13:02:07 UTC; xavier
 Repository: CRAN
-Date/Publication: 2015-07-29 20:48:47
+Date/Publication: 2015-09-03 16:53:22
