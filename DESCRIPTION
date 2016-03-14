@@ -5,12 +5,12 @@ Description: Tools for assessing and diagnosing convergence of
     results from full MCMC analysis. The package also facilitates the graphical
     interpretation of models by providing flexible functions to plot the
     results against observed variables.
-Version: 0.7.3
+Version: 0.8
 Maintainer: Xavier Fernández i Marín <xavier.fim@gmail.com>
 Author: Xavier Fernández i Marín <xavier.fim@gmail.com>
 Depends: dplyr, tidyr (>= 0.3.1), ggplot2
 Imports: GGally (>= 0.5.0)
-Suggests: coda
+Suggests: coda, knitr, rmarkdown, ggthemes, gridExtra, Cairo, extrafont
 License: GPL-2
 URL: http://xavier-fim.net/packages/ggmcmc,
         https://github.com/xfim/ggmcmc
@@ -24,7 +24,8 @@ Collate: 'ggmcmc.R' 'ggs.R' 'ggs_autocorrelation.R'
         'ggs_separation.R' 'globals.R' 'ggs_ppmean.R' 'ggs_ppsd.R'
         'ggs_rocplot.R'
 RoxygenNote: 5.0.1
+VignetteBuilder: knitr
 NeedsCompilation: no
-Packaged: 2016-01-04 11:17:11 UTC; xavier
+Packaged: 2016-03-14 16:51:52 UTC; xavier
 Repository: CRAN
-Date/Publication: 2016-01-04 12:47:41
+Date/Publication: 2016-03-14 18:10:23

@@ -1,4 +1,4 @@
- #' Caterpillar plot with thick and thin CI
+#' Caterpillar plot with thick and thin CI
 #'
 #' Caterpillar plots are plotted combining all chains for each parameter.
 #'
@@ -10,6 +10,7 @@
 #' @param line Numerical value indicating a concrete position, usually used to mark where zero is. By default do not plot any line.
 #' @param horizontal Logical. When TRUE (the default), the plot has horizontal lines. When FALSE, the plot is reversed to show vertical lines. Horizontal lines are more appropriate for categorical caterpillar plots, because the x-axis is the only dimension that matters. But for caterpillar plots against another variable, the vertical position is more appropriate.
 #' @param model_labels Vector of strings that matches the number of models in the list. It is only used in case of multiple models and when the list of ggs objects given at \code{D} is not named. Otherwise, the names in the list are used.
+#' @param greek Logical value indicating whether parameter labels have to be parsed to get Greek letters. Defaults to false.
 #' @return A \code{ggplot} object.
 #' @export
 #' @examples
@@ -18,7 +19,7 @@
 #' ggs_caterpillar(list(A=ggs(s), B=ggs(s))) # silly example duplicating the same model
 ggs_caterpillar <- function(D, family=NA, X=NA, 
   thick_ci=c(0.05, 0.95), thin_ci=c(0.025, 0.975),
-  line=NA, horizontal=TRUE, model_labels=NULL) {
+  line=NA, horizontal=TRUE, model_labels=NULL, greek=FALSE) {
   
   # Manage subsetting a family of parameters
   if (!is.na(family)) {
@@ -60,13 +61,13 @@ ggs_caterpillar <- function(D, family=NA, X=NA,
       if (length(names(D)!=0)) model.label <- names(D)[i]                   # get model labels from named list
 
       # Transform list elements into wide dfs with thick and thin limits
-      dcm <- dplyr::bind_rows(dcm, ci(D[[i]]) %>%
+      dcm <- dplyr::bind_rows(dcm, ci(D[[i]], thick_ci = thick_ci, thin_ci = thin_ci) %>%
         dplyr::mutate(Model=model.label))
     }
 
   } else if (is.data.frame(D)) { # D is a data frame, and so a single model is passed
     multi <-  FALSE
-    dcm <- ci(D)
+    dcm <- ci(D, thick_ci = thick_ci, thin_ci = thin_ci)
   }
 
   #
@@ -77,6 +78,9 @@ ggs_caterpillar <- function(D, family=NA, X=NA,
       geom_segment(aes(x=Low, xend=High, yend=reorder(Parameter, median)), size=1.5) +
       geom_segment(aes(x=low, xend=high, yend=reorder(Parameter, median)), size=0.5) +
       xlab("HPD") + ylab("Parameter")
+    if (greek) {
+      f <- f + scale_y_discrete(labels = parse(text = as.character(dcm$Parameter)))
+    }
   } else {
     dcm <- merge(dcm, X)
     f <- ggplot(dcm, aes_string(x="median", y=x.name)) + geom_point(size=3) +
