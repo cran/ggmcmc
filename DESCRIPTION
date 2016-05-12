@@ -5,10 +5,10 @@ Description: Tools for assessing and diagnosing convergence of
     results from full MCMC analysis. The package also facilitates the graphical
     interpretation of models by providing flexible functions to plot the
     results against observed variables.
-Version: 0.8
+Version: 1.0
 Maintainer: Xavier Fernández i Marín <xavier.fim@gmail.com>
 Author: Xavier Fernández i Marín <xavier.fim@gmail.com>
-Depends: dplyr, tidyr (>= 0.3.1), ggplot2
+Depends: dplyr (>= 0.4.3), tidyr (>= 0.3.1), ggplot2
 Imports: GGally (>= 0.5.0)
 Suggests: coda, knitr, rmarkdown, ggthemes, gridExtra, Cairo, extrafont
 License: GPL-2
@@ -26,6 +26,6 @@ Collate: 'ggmcmc.R' 'ggs.R' 'ggs_autocorrelation.R'
 RoxygenNote: 5.0.1
 VignetteBuilder: knitr
 NeedsCompilation: no
-Packaged: 2016-03-14 16:51:52 UTC; xavier
+Packaged: 2016-05-11 20:21:06 UTC; xavier
 Repository: CRAN
-Date/Publication: 2016-03-14 18:10:23
+Date/Publication: 2016-05-12 14:47:25

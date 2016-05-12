@@ -30,6 +30,9 @@ str(S)
 ## ---- eval=FALSE---------------------------------------------------------
 #  ggmcmc(S, plot=c("density", "running", "caterpillar"))
 
+## ---- eval=FALSE---------------------------------------------------------
+#  ggmcmc(S, file = "model_simple.html", dev_type_html = "svg")
+
 ## ----histogram, fig.cap='Histogram (ggs\\_histogram())', fig.width=6, fig.height=6, fig.margin=TRUE, warning=FALSE----
 ggs_histogram(S)
 
@@ -112,6 +115,9 @@ ggs_separation(S.binary, outcome=y.binary, minimalist = TRUE)
 
 ## ----pairs, fig.width=10, fig.height=10, fig.cap='Paired plot showing scatterplots, densities and crosscorrelations.', message= FALSE----
 ggs_pairs(S, lower = list(continuous = "density"))
+
+## ----histogram_greek, fig.cap='Histogram (ggs\\_histogram()) with parameter names using Greek letters.', fig.width=6, fig.height=6, fig.margin=TRUE, warning=FALSE----
+ggs_histogram(S, greek = TRUE)
 
 ## ----combination_aesthetics, fig.width=12, fig.height=4, fig.cap='Combination of the aestheticaly-driven options that complement \`ggplot2`: \`ggthemes` and \`gridExtra`.', message=FALSE----
 library(gridExtra)
