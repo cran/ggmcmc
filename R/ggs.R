@@ -8,6 +8,7 @@
 #' @param description Character vector giving a short descriptive text that identifies the model.
 #' @param burnin Logical or numerical value. When logical and TRUE (the default), the number of samples in the burnin period will be taken into account, if it can be guessed by the extracting process. Otherwise, iterations will start counting from 1. If a numerical vector is given, the user then supplies the length of the burnin period.
 #' @param par_labels data frame with two colums. One named "Parameter" with the same names of the parameters of the model. Another named "Label" with the label of the parameter. When missing, the names passed to the model are used for representation. When there is no correspondence between a Parameter and a Label, the original name of the parameter is used. The order of the levels of the original Parameter does not change.
+#' @param sort Logical. When TRUE (the default), parameters are sorted first by family name and then by numerical value.
 #' @param inc_warmup Logical. When dealing with stanfit objects from rstan, logical value whether the warmup samples are included. Defaults to FALSE.
 #' @param stan_include_auxiliar Logical value to include "lp__" parameter in rstan, and "lp__", "treedepth__" and "stepsize__" in stan running without rstan. Defaults to FALSE.
 #' @export
@@ -20,7 +21,7 @@
 #'
 #' # Get samples from 'beta' parameters only
 #' S <- ggs(s, family = "beta")
-ggs <- function(S, family=NA, description=NA, burnin=TRUE, par_labels=NA, inc_warmup=FALSE, stan_include_auxiliar=FALSE) {
+ggs <- function(S, family=NA, description=NA, burnin=TRUE, par_labels=NA, sort=TRUE, inc_warmup=FALSE, stan_include_auxiliar=FALSE) {
   processed <- FALSE # set by default that there has not been any processed samples
   #
   # Manage stanfit obcjets
@@ -37,6 +38,8 @@ ggs <- function(S, family=NA, description=NA, burnin=TRUE, par_labels=NA, inc_wa
   if (class(S)=="stanfit") {
     # Extract chain by chain
     nChains <- S@sim$chains
+    nThin <- S@sim$thin
+    mDescription <- S@model_name
     D <- NULL
     for (l in 1:nChains) {
       sdf <- as.data.frame(S@sim$samples[[l]])
@@ -49,9 +52,9 @@ ggs <- function(S, family=NA, description=NA, burnin=TRUE, par_labels=NA, inc_wa
     }
     if (!inc_warmup) {
       if (original.object.class == "stanfit") {
-        D <- dplyr::filter(D, Iteration > S@sim$warmup)
+        D <- dplyr::filter(D, Iteration > (S@sim$warmup / nThin))
+        D$Iteration <- D$Iteration - (S@sim$warmup / nThin)
       }
-      D$Iteration <- D$Iteration - S@sim$warmup
       nBurnin <- S@sim$warmup
     } else {
       nBurnin <- 0
@@ -59,10 +62,12 @@ ggs <- function(S, family=NA, description=NA, burnin=TRUE, par_labels=NA, inc_wa
     # Exclude, by default, lp parameter
     if (!stan_include_auxiliar) {
       D <- dplyr::filter(D, Parameter!="lp__") # delete lp__
-      D$Parameter <- factor(D$Parameter, levels=custom.sort(D$Parameter))
     }
-    nThin <- S@sim$thin
-    mDescription <- S@model_name
+    if (sort) {
+      D$Parameter <- factor(D$Parameter, levels=custom.sort(D$Parameter))
+    } else {
+      D$Parameter <- factor(D$Parameter)
+    }
     processed <- TRUE
     D <- dplyr::tbl_df(D)
   }
@@ -83,7 +88,11 @@ ggs <- function(S, family=NA, description=NA, burnin=TRUE, par_labels=NA, inc_wa
     # Exclude, by default, lp parameter and other auxiliar ones
     if (!stan_include_auxiliar) {
       D <- D[grep("__$", D$Parameter, invert=TRUE),]
-      D$Parameter <- factor(D$Parameter, levels=custom.sort(D$Parameter))
+      if (sort) {
+        D$Parameter <- factor(D$Parameter, levels=custom.sort(D$Parameter))
+      } else {
+        D$Parameter <- factor(D$Parameter)
+      }
     }
     nBurnin <- as.integer(gsub("warmup=", "", scan(S[[i]], "", skip=12, nlines=1, quiet=TRUE)[2]))
     nThin <- as.integer(gsub("thin=", "", scan(S[[i]], "", skip=13, nlines=1, quiet=TRUE)[2]))
@@ -120,7 +129,11 @@ ggs <- function(S, family=NA, description=NA, burnin=TRUE, par_labels=NA, inc_wa
         nBurnin <- (attributes(s)$mcpar[1])-(1*attributes(s)$mcpar[3])
         nThin <- attributes(s)$mcpar[3]
       }
-      D$Parameter <- factor(D$Parameter, levels=custom.sort(D$Parameter))
+      if (sort) {
+        D$Parameter <- factor(D$Parameter, levels=custom.sort(D$Parameter))
+      } else {
+        D$Parameter <- factor(D$Parameter)
+      }
       D <- dplyr::arrange(D, Parameter, Chain, Iteration)
     }
     # Set several attributes to the object, to avoid computations afterwards
@@ -165,7 +178,7 @@ ggs <- function(S, family=NA, description=NA, burnin=TRUE, par_labels=NA, inc_wa
       D <- get_family(D, family=family)
     }
     # Change the names of the parameters if par_labels argument has been passed
-    if (class(par_labels)=="data.frame") {
+    if (class(par_labels) %in% c("data.frame", "tbl_df")) {
       if (length(which(c("Parameter", "Label") %in% names(par_labels))) == 2) {
         aD <- attributes(D)
         levels(D$Parameter)[which(levels(D$Parameter) %in% par_labels$Parameter)] <-
@@ -177,7 +190,11 @@ ggs <- function(S, family=NA, description=NA, burnin=TRUE, par_labels=NA, inc_wa
         D <- D %>%
           dplyr::select(Iteration, Chain, Parameter, value, ParameterOriginal)
         if (class(D$Parameter) == "character") {
-          D$Parameter <- factor(D$Parameter, levels=custom.sort(D$Parameter))
+          if (sort) {
+            D$Parameter <- factor(D$Parameter, levels=custom.sort(D$Parameter))
+          } else {
+            D$Parameter <- factor(D$Parameter)
+          }
         }
         # Unfortunately, the attributes are not inherited in left_join(), so they have to be manually passed again
         attr(D, "nChains") <- aD$nChains
@@ -194,7 +211,11 @@ ggs <- function(S, family=NA, description=NA, burnin=TRUE, par_labels=NA, inc_wa
             dplyr::mutate(Label = as.character(Label))
           D <- suppressWarnings(dplyr::left_join(D, L.noParameter, by=c("Parameter" = "Label")))
           if (class(D$Parameter) == "character") {
-            D$Parameter <- factor(D$Parameter, levels=custom.sort(D$Parameter))
+            if (sort) {
+              D$Parameter <- factor(D$Parameter, levels=custom.sort(D$Parameter))
+            } else {
+              D$Parameter <- factor(D$Parameter)
+            }
           }
         }
         # Unfortunately, the attributes are not inherited in left_join(), so they have to be manually passed again (for second time).
@@ -209,7 +230,7 @@ ggs <- function(S, family=NA, description=NA, burnin=TRUE, par_labels=NA, inc_wa
       }
     } else {
       if (!is.na(par_labels)) {
-        stop("par_labels must be a data frame.")
+        stop("par_labels must be a data frame or a tbl_df.")
       }
     }
     # Once everything is ready, return the processed object
