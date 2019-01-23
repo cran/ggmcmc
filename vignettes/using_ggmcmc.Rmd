@@ -440,5 +440,5 @@ I would like to thank code contributions and ideas from [Zachary M. Jones][zacha
 [zachary]: http://www.zmjones.com/
 [julien]: http://www.cornebise.com/julien/
 [dieter]: http://www.menne-biomed.de/
-[maxjoseph]: http://mbjoseph.github.io/about/
+[maxjoseph]: https://mbjoseph.github.io/
 [gandrud]: http://christophergandrud.blogspot.com

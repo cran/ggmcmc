@@ -11,10 +11,10 @@ knit_hooks$set(par=function(before, options, envir) {
 }, crop=hook_pdfcrop)
 knit_theme$set("print")
 
-## ----message=FALSE, warning=FALSE, eval=FALSE-----------------------
-#  library("ggmcmc")
-#  data("radon")
-#  s.radon.short <- radon$s.radon.short
+## ----message=FALSE, warning=FALSE, eval=TRUE------------------------
+library("ggmcmc")
+data("radon")
+s.radon.short <- radon$s.radon.short
 
 ## ----ggs------------------------------------------------------------
 S <- ggs(s.radon.short)
