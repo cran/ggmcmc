@@ -14,8 +14,8 @@
 #' @export
 #' @return D A data frame tbl with the data arranged and ready to be used by the rest of the \code{ggmcmc} functions. The data frame has four columns, namely: Iteration, Chain, Parameter and value, and six attributes: nChains, nParameters, nIterations, nBurnin, nThin and description. A data frame tbl is a wrapper to a local data frame, behaves like a data frame and its advantage is related to printing, which is compact. For more details, see \code{tbl_df()} in package \code{dplyr}.
 #' @examples
-#' # Assign 'D' to be a data frame suitable for \code{ggmcmc} functions from
-#' # a coda object called S
+#' # Assign 'S' to be a data frame suitable for \code{ggmcmc} functions from
+#' # a coda object called s
 #' data(linear)
 #' S <- ggs(s)        # s is a coda object
 #'
@@ -102,6 +102,11 @@ ggs <- function(S, family=NA, description=NA, burnin=TRUE, par_labels=NA, sort=T
   # Manage mcmc.list and mcmc objects
   #
   if (class(S)=="mcmc.list" | class(S)=="mcmc" | processed) {  # JAGS typical output or MCMCpack (or previously processed stan samples)
+    if (!is.na(family)) {
+      requireNamespace("coda")
+      location.family <- grep(family, dimnames(S[[1]])[[2]])
+      S <- S[,location.family, drop = FALSE]
+    }
     if (!processed) { # only in JAGS or MCMCpack, using coda
       lS <- length(S)
       D <- NULL

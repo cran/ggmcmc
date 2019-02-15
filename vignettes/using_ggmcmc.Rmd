@@ -16,15 +16,6 @@ vignette: >
 library(ggmcmc)
 ```
 
-```{r ggplot2_style, echo=FALSE, message=FALSE, warning=FALSE}
-library(ggthemes)
-library(extrafont)
-loadfonts(quiet=TRUE)
-theme_set(theme_grey(base_size=12, base_family="Source Sans Pro"))
-```
-
-There is a pdf version of [Using the ggmcmc package][pdf].
-
 \marginnote{This document refers to ggmcmc version `r packageVersion("ggmcmc")`.}
 
 
@@ -97,7 +88,7 @@ In addition to `JAGS` output mentioned above, `ggs()` is capable to automaticall
 
 * **`JAGS`** which produces objects of class `mcmc.list` [@jags].
 * **`MCMCpack`** which produces objects of class `mcmc` [@mcmcpack].
-* **`rstan`**, **`rstanarm`** and **`brms`** which produce, respectively, objects of classes `stanfit` [@stan], `stanreg` [@stanreg] and `brmsfit` [@brms].
+* **`rstan`**, **`rstanarm`** and **`brms`** which produce, respectively, objects of classes `stanfit` [@stan], `stanreg` [@stanarm] and `brmsfit` [@brms].
 * **`Stan` running alone** when `Stan` runs from the command line it produces csv files [@stan].
 
 
@@ -392,17 +383,14 @@ The combination of `ggmcmc` with the package `ggthemes` allows using pre-specifi
 
 In addition to `ggthemes`, `ggmcmc` can also work well with `gridExtra`, a package that allows combining several `ggplot` objects in a single layout.
 
-```{r combination_aesthetics, fig.width=12, fig.height=4, fig.cap='Combination of the aestheticaly-driven options that complement \`ggplot2`: \`ggthemes` and \`gridExtra`.', message=FALSE}
-library(gridExtra)
-library(ggthemes)
-f1 <- ggs_traceplot(ggs(s, family="^beta\\[[1234]\\]")) + 
-  theme_fivethirtyeight()
-f2 <- ggs_density(ggs(s, family="^beta\\[[1234]\\]")) + 
-  theme_solarized(light=TRUE)
-grid.arrange(f1, f2, ncol=2, nrow=1)
-```
+# Combination with the power of ggplot2
 
-Another facility is to extend `ggs_caterpillar()` using facets with variables passed through `par_labels`, or adding other variables to the aesthetics.
+The philosophy of `ggmcmc` is not to provide all the flexibility of `ggplot2`
+hard-coded in the functions. Instead, the idea is to provide a flexible
+environment to treat `ggs` objects in a basic way and then move back to all the
+potential that `ggplot2` offers.
+
+One facility is to extend `ggs_caterpillar()` using facets with variables passed through `par_labels`, or adding other variables to the aesthetics.
 The following figure shows a caterpillar plot of the intercepts, with facets on the North/South location and using a color scale to emphasize the uranium level by county.
 ```{r extension_facets_aes, fig.width=12, fig.height=8, fig.cap='Caterpillar plot of the varying intercepts faceted by North/South location and using county\'s uranium level as color indicator.', warning=FALSE}
 ci.median <- ci(ggs(radon$s.radon, family="^alpha|^beta")) %>%
@@ -423,22 +411,33 @@ ggs_caterpillar(ggs(radon$s.radon, par_labels=L.radon, family="^alpha")) +
   aes(color=Uranium)
 ```
 
+Another option is, for instance, when the display is not enough to accommodate all
+parameters, to use `facet_wrap()` to accommodate several parameters
+in a faceted way, not only vertically (as is the `ggmcmc` default).
+```{r facets, fig.width = 10, fig.height = 10, fig.cap = 'Density plots of the varying intercepts faceted in a grid by columns.'}
+ggs_density(ggs(radon$s.radon, par_labels=L.radon, family="^alpha"),
+            hpd = TRUE) +
+  facet_wrap(~ Parameter, ncol = 6)
+```
+
+
 # Development
 The development of `ggmcmc` (track changes, propose improvements, report bugs) can be followed at [https://github.com/xfim/ggmcmc][github].
 
 
 
 # Acknowledgements
-I would like to thank code contributions and ideas from [Zachary M. Jones][zachary], [Julien Cornebise][julien], [Max Joseph][maxjoseph], and ideas from [Dieter Menne][dieter], Bill Dixon, [Christopher Gandrud][gandrud], Barret Schloerke and GitHub users knokknok, akrawitz, Justina (Juste) and stefanherzog.
+I would like to thank code contributions and ideas from [Zachary M. Jones][zachary], [Julien Cornebise][julien], [Max Joseph][maxjoseph], and ideas from [Dieter Menne][dieter], Bill Dixon, [Christopher Gandrud][gandrud], Barret Schloerke and GitHub users knokknok, akrawitz, Justina (Juste), stefanherzog, [Brain Stock][brianstock] and [Jonas Kristoffer Lindeløv][lindeloev].
 
 # References
 
 <!-- Links -->
 
 [github]: https://github.com/xfim/ggmcmc
-[pdf]: ./using_ggmcmc.pdf "Using the ggmcmc package"
 [zachary]: http://www.zmjones.com/
 [julien]: http://www.cornebise.com/julien/
 [dieter]: http://www.menne-biomed.de/
-[maxjoseph]: https://mbjoseph.github.io/
+[maxjoseph]: http://mbjoseph.github.io
 [gandrud]: http://christophergandrud.blogspot.com
+[brianstock]: https://github.com/brianstock
+[lindeloev]: http://lindeloev.net/

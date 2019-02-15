@@ -5,8 +5,8 @@ Description: Tools for assessing and diagnosing convergence of
     results from full MCMC analysis. The package also facilitates the graphical
     interpretation of models by providing flexible functions to plot the
     results against observed variables.
-Version: 1.1.1
-Maintainer: ORPHANED
+Version: 1.2
+Maintainer: Xavier Fernández i Marín <xavier.fim@gmail.com>
 Author: Xavier Fernández i Marín <xavier.fim@gmail.com>
 Depends: dplyr (>= 0.5.0), tidyr (>= 0.5.1), ggplot2
 Imports: GGally (>= 1.1.0)
@@ -24,13 +24,9 @@ Collate: 'ggmcmc.R' 'ggs.R' 'ggs_autocorrelation.R'
         'ggs_Rhat.R' 'ggs_geweke.R' 'ggs_caterpillar.R'
         'ggs_separation.R' 'globals.R' 'ggs_ppmean.R' 'ggs_ppsd.R'
         'ggs_rocplot.R'
-RoxygenNote: 5.0.1
+RoxygenNote: 6.1.1
 VignetteBuilder: knitr
 NeedsCompilation: no
-Packaged: 2019-01-23 11:40:00 UTC; ripley
+Packaged: 2019-02-15 21:22:07 UTC; xavier
 Repository: CRAN
-Date/Publication: 2019-01-23 18:57:04 UTC
-X-CRAN-Original-Maintainer: Xavier Fernández i Marín
-        <xavier.fim@gmail.com>
-X-CRAN-Comment: Orphaned on 2019-01-23 as no response to request to fix
-        check issues.
+Date/Publication: 2019-02-15 23:10:04 UTC

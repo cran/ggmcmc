@@ -36,7 +36,8 @@ get_family <- function(D, family=NA) {
 #' @export
 sde0f <- function(x) {
   # In case of series not varying, set v0 to 0
-  if (length(unique(x))>1) {
+  # if (length(unique(x))>1) {
+  if (0 != var(if (is.factor(x)) as.integer(x) else x)) {    
     m.ar <- ar(x)
     v0 <- m.ar$var.pred / (1-sum(m.ar$ar))^2
   } else {
@@ -116,7 +117,7 @@ ci <- function (D, thick_ci=c(0.05, 0.95), thin_ci=c(0.025, 0.975)) {
     dplyr::select(Parameter, low, Low, median, High, high)
   # Recover the rest of the variables that can come with the par_labels
   if (dim(D)[2] > 4) {
-    X <- suppressWarnings(dplyr::left_join(X, unique(dplyr::select(D, -Iteration, -Chain, -value)), by="Parameter"))
+    X <- suppressWarnings(dplyr::left_join(X, dplyr::distinct(dplyr::select(D, -Iteration, -Chain, -value)), by="Parameter"))
   }
   return(X)
 }

@@ -1,12 +1,6 @@
 ## ----echo=FALSE, message=FALSE, warning=FALSE----------------------------
 library(ggmcmc)
 
-## ----ggplot2_style, echo=FALSE, message=FALSE, warning=FALSE-------------
-library(ggthemes)
-library(extrafont)
-loadfonts(quiet=TRUE)
-theme_set(theme_grey(base_size=12, base_family="Source Sans Pro"))
-
 ## ------------------------------------------------------------------------
 library(ggmcmc)
 data(radon)
@@ -119,15 +113,6 @@ ggs_pairs(S, lower = list(continuous = "density"))
 ## ----histogram_greek, fig.cap='Histogram (ggs\\_histogram()) with parameter names using Greek letters.', fig.width=6, fig.height=6, fig.margin=TRUE, warning=FALSE----
 ggs_histogram(S, greek = TRUE)
 
-## ----combination_aesthetics, fig.width=12, fig.height=4, fig.cap='Combination of the aestheticaly-driven options that complement \`ggplot2`: \`ggthemes` and \`gridExtra`.', message=FALSE----
-library(gridExtra)
-library(ggthemes)
-f1 <- ggs_traceplot(ggs(s, family="^beta\\[[1234]\\]")) + 
-  theme_fivethirtyeight()
-f2 <- ggs_density(ggs(s, family="^beta\\[[1234]\\]")) + 
-  theme_solarized(light=TRUE)
-grid.arrange(f1, f2, ncol=2, nrow=1)
-
 ## ----extension_facets_aes, fig.width=12, fig.height=8, fig.cap='Caterpillar plot of the varying intercepts faceted by North/South location and using county\'s uranium level as color indicator.', warning=FALSE----
 ci.median <- ci(ggs(radon$s.radon, family="^alpha|^beta")) %>%
   select(Parameter, median)
@@ -145,4 +130,9 @@ L.radon <- data.frame(
 ggs_caterpillar(ggs(radon$s.radon, par_labels=L.radon, family="^alpha")) +
   facet_wrap(~ Location, scales="free") +
   aes(color=Uranium)
+
+## ----facets, fig.width = 10, fig.height = 10, fig.cap = 'Density plots of the varying intercepts faceted in a grid by columns.'----
+ggs_density(ggs(radon$s.radon, par_labels=L.radon, family="^alpha"),
+            hpd = TRUE) +
+  facet_wrap(~ Parameter, ncol = 6)
 
