@@ -61,9 +61,7 @@ P <- data.frame(
 ggs_density(ggs(radon$s.radon, par_labels=P, family="sigma"))
 
 ## ----caterpillar_preparation, warning=FALSE------------------------------
-L.radon.intercepts <- data.frame(
-  Parameter=paste("alpha[", radon$counties$id.county, "]", sep=""),
-  Label=radon$counties$County)
+L.radon.intercepts <- plab("alpha", list(County = radon$counties$County))
 head(L.radon.intercepts)
 S.full <- ggs(radon$s.radon, par_labels=L.radon.intercepts, family="^alpha")
 
@@ -107,6 +105,9 @@ ggs_separation(S.binary, outcome=y.binary,
 ## ---- separation_minimalist, fig.width=4, fig.height=1, fig.cap='Separation plot (minimalist version).', fig.margin=TRUE----
 ggs_separation(S.binary, outcome=y.binary, minimalist = TRUE)
 
+## ---- pcp, fig.width=6, fig.height=5, fig.cap='Distribution of the percentage of cases correctly predicted.'----
+ggs_pcp(S.binary, outcome=y.binary)
+
 ## ----pairs, fig.width=10, fig.height=10, fig.cap='Paired plot showing scatterplots, densities and crosscorrelations.', message= FALSE----
 ggs_pairs(S, lower = list(continuous = "density"))
 
@@ -114,24 +115,25 @@ ggs_pairs(S, lower = list(continuous = "density"))
 ggs_histogram(S, greek = TRUE)
 
 ## ----extension_facets_aes, fig.width=12, fig.height=8, fig.cap='Caterpillar plot of the varying intercepts faceted by North/South location and using county\'s uranium level as color indicator.', warning=FALSE----
-ci.median <- ci(ggs(radon$s.radon, family="^alpha|^beta")) %>%
+ci.median <- ci(ggs(radon$s.radon, family = "^alpha|^beta")) %>%
   select(Parameter, median)
 
-L.radon <- data.frame(
-  Parameter=c(
-    paste("alpha[", radon$counties$id.county, "]", sep=""),
-    paste("beta[", radon$counties$id.county, "]", sep="")),
-  Label=rep(radon$counties$County, 2),
-  Uranium=rep(radon$counties$uranium, 2),
-  Location=rep(radon$counties$ns.location, 2),
-  Coefficient=gl(2, length(radon$counties$id.county), 
-    labels=c("Intercept", "Slope")))
+L.radon <- bind_rows(
+   plab("alpha", list(County = radon$counties$County)) %>%
+     mutate(Coefficient = "Intercept"),
+   plab("beta", list(County = radon$counties$County)) %>%
+     mutate(Coefficient = "Slope")) %>%
+  left_join(radon$counties) %>%
+  rename(Uranium = uranium) %>%
+  rename(Location = ns.location)
 
-ggs_caterpillar(ggs(radon$s.radon, par_labels=L.radon, family="^alpha")) +
-  facet_wrap(~ Location, scales="free") +
-  aes(color=Uranium)
+head(L.radon)
 
-## ----facets, fig.width = 10, fig.height = 10, fig.cap = 'Density plots of the varying intercepts faceted in a grid by columns.'----
+ggs_caterpillar(ggs(radon$s.radon, par_labels = L.radon, family = "^alpha")) +
+  facet_wrap(~ Location, scales = "free") +
+  aes(color = Uranium)
+
+## ----facets, fig.width = 10, fig.height = 14, fig.cap = 'Density plots of the varying intercepts faceted in a grid by columns.'----
 ggs_density(ggs(radon$s.radon, par_labels=L.radon, family="^alpha"),
             hpd = TRUE) +
   facet_wrap(~ Parameter, ncol = 6)

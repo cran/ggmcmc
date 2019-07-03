@@ -88,7 +88,7 @@ In addition to `JAGS` output mentioned above, `ggs()` is capable to automaticall
 
 * **`JAGS`** which produces objects of class `mcmc.list` [@jags].
 * **`MCMCpack`** which produces objects of class `mcmc` [@mcmcpack].
-* **`rstan`**, **`rstanarm`** and **`brms`** which produce, respectively, objects of classes `stanfit` [@stan], `stanreg` [@stanarm] and `brmsfit` [@brms].
+* **`rstan`**, **`rstanarm`** and **`brms`** which produce, respectively, objects of classes `stanfit` [@stan], `stanreg` [@rstanarm] and `brmsfit` [@brms].
 * **`Stan` running alone** when `Stan` runs from the command line it produces csv files [@stan].
 
 
@@ -203,6 +203,8 @@ ggs_Rhat(S) + xlab("R_hat")
 
 The Potential Scale Reduction Factor ($\hat{R}$)[@gelman:bayesian:2003] relies on different chains for the same parameter, by comparing the between-chain variation with the within-chain variation.
 It is expected to be close to 1.
+The argument `version_Rhat` allows to use the default "BDA2" version
+([@gelman:bayesian:2003]) or the "BG98" version used in the coda package.
 
 ## Geweke Diagnostics
 ```{r geweke, fig.cap='Geweke diagnostic (ggs\\_geweke())', fig.height=4, fig.width=6, fig.margin=TRUE}
@@ -248,11 +250,16 @@ The simplest use is to get a sense of the distribution of the parameters, using 
 The function produces caterpillar plots of the highest posterior densities of the parameters.
 By default, `ggs_caterpillar()` produces thick lines at the 90\% highest posterior density (HPD) region and thin lines at the 95\% HPD.
 
-The following code creates a data set with the matches between the parameter names for the intercepts (`alpha[1]:alpha[85]`) and their substantial meaning (labels for counties) and then it passes this data frame as an argument to the `ggs()` function that converts the original samples in `JAGS` into a proper object ready for being used by all `ggs_*()` functions.
+In this case, in order to create a matching data frame for parameters and
+labels, `ggmcmc` contains a function that performs this function, and is
+specially suitable when multi-dimensional parameters are used. This is the case
+of hierarchical/multilevel models and parameters that contain subscripts by _i_ (observations), _j_ (groups), _t_ (time), etc... 
+`plab()` needs two arguments. The first one is the name of the parameter, which
+in this case is `alpha`. The second argument is a named list containing all the
+values that refer to the subscripts of the parameter.
+The following use of `plab()` creates a data set with the matches between the parameter names for the intercepts (`alpha[1]:alpha[85]`) and their substantial meaning (labels for counties) and then it passes this data frame as an argument to the `ggs()` function that converts the original samples in `JAGS` into a proper object ready for being used by all `ggs_*()` functions.
 ```{r caterpillar_preparation, warning=FALSE}
-L.radon.intercepts <- data.frame(
-  Parameter=paste("alpha[", radon$counties$id.county, "]", sep=""),
-  Label=radon$counties$County)
+L.radon.intercepts <- plab("alpha", list(County = radon$counties$County))
 head(L.radon.intercepts)
 S.full <- ggs(radon$s.radon, par_labels=L.radon.intercepts, family="^alpha")
 ```
@@ -359,6 +366,16 @@ The argument `minimalist` (FALSE by default) allows get a minimal Tufte style in
 ggs_separation(S.binary, outcome=y.binary, minimalist = TRUE)
 ```
 
+## Percent of correctly predicted
+
+The distribution of the percentage of correctly predicted cases can be obtained
+using the `ggs_pcp()` function:
+```{r, pcp, fig.width=6, fig.height=5, fig.cap='Distribution of the percentage of cases correctly predicted.'}
+ggs_pcp(S.binary, outcome=y.binary)
+```
+
+
+
 # Paired plots
 The package `ggally` provides an easy way to extend `ggmcmc` through the
 `ggs_pairs()` function, which by defaults shows the scatterplots of the pairs of parameters in the `ggs` object, the densities and the crosscorrelations in a single layout.
@@ -393,28 +410,29 @@ potential that `ggplot2` offers.
 One facility is to extend `ggs_caterpillar()` using facets with variables passed through `par_labels`, or adding other variables to the aesthetics.
 The following figure shows a caterpillar plot of the intercepts, with facets on the North/South location and using a color scale to emphasize the uranium level by county.
 ```{r extension_facets_aes, fig.width=12, fig.height=8, fig.cap='Caterpillar plot of the varying intercepts faceted by North/South location and using county\'s uranium level as color indicator.', warning=FALSE}
-ci.median <- ci(ggs(radon$s.radon, family="^alpha|^beta")) %>%
+ci.median <- ci(ggs(radon$s.radon, family = "^alpha|^beta")) %>%
   select(Parameter, median)
 
-L.radon <- data.frame(
-  Parameter=c(
-    paste("alpha[", radon$counties$id.county, "]", sep=""),
-    paste("beta[", radon$counties$id.county, "]", sep="")),
-  Label=rep(radon$counties$County, 2),
-  Uranium=rep(radon$counties$uranium, 2),
-  Location=rep(radon$counties$ns.location, 2),
-  Coefficient=gl(2, length(radon$counties$id.county), 
-    labels=c("Intercept", "Slope")))
+L.radon <- bind_rows(
+   plab("alpha", list(County = radon$counties$County)) %>%
+     mutate(Coefficient = "Intercept"),
+   plab("beta", list(County = radon$counties$County)) %>%
+     mutate(Coefficient = "Slope")) %>%
+  left_join(radon$counties) %>%
+  rename(Uranium = uranium) %>%
+  rename(Location = ns.location)
 
-ggs_caterpillar(ggs(radon$s.radon, par_labels=L.radon, family="^alpha")) +
-  facet_wrap(~ Location, scales="free") +
-  aes(color=Uranium)
+head(L.radon)
+
+ggs_caterpillar(ggs(radon$s.radon, par_labels = L.radon, family = "^alpha")) +
+  facet_wrap(~ Location, scales = "free") +
+  aes(color = Uranium)
 ```
 
 Another option is, for instance, when the display is not enough to accommodate all
 parameters, to use `facet_wrap()` to accommodate several parameters
 in a faceted way, not only vertically (as is the `ggmcmc` default).
-```{r facets, fig.width = 10, fig.height = 10, fig.cap = 'Density plots of the varying intercepts faceted in a grid by columns.'}
+```{r facets, fig.width = 10, fig.height = 14, fig.cap = 'Density plots of the varying intercepts faceted in a grid by columns.'}
 ggs_density(ggs(radon$s.radon, par_labels=L.radon, family="^alpha"),
             hpd = TRUE) +
   facet_wrap(~ Parameter, ncol = 6)
@@ -427,7 +445,7 @@ The development of `ggmcmc` (track changes, propose improvements, report bugs) c
 
 
 # Acknowledgements
-I would like to thank code contributions and ideas from [Zachary M. Jones][zachary], [Julien Cornebise][julien], [Max Joseph][maxjoseph], and ideas from [Dieter Menne][dieter], Bill Dixon, [Christopher Gandrud][gandrud], Barret Schloerke and GitHub users knokknok, akrawitz, Justina (Juste), stefanherzog, [Brain Stock][brianstock] and [Jonas Kristoffer Lindeløv][lindeloev].
+I would like to thank code contributions and ideas from [Zachary M. Jones][zachary], [Julien Cornebise][julien], [Max Joseph][maxjoseph], and ideas from [Dieter Menne][dieter], Bill Dixon, [Christopher Gandrud][gandrud], Barret Schloerke and GitHub users knokknok, akrawitz, Justina (Juste), stefanherzog, [Brain Stock][brianstock], [Jonas Kristoffer Lindeløv][lindeloev], [Jakob Fiksel][jfiksel] and [Sébastien Rochette][statnmap].
 
 # References
 
@@ -441,3 +459,5 @@ I would like to thank code contributions and ideas from [Zachary M. Jones][zacha
 [gandrud]: http://christophergandrud.blogspot.com
 [brianstock]: https://github.com/brianstock
 [lindeloev]: http://lindeloev.net/
+[jfiksel]: https://github.com/jfiksel
+[statnmap]: https://statnmap.com/

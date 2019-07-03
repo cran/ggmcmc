@@ -7,7 +7,7 @@
 #' @param D Data frame whith the simulations, previously arranged using \code{\link{ggs}}
 #' @param file Character vector with the name of the file to create. Defaults to "ggmcmc-output.pdf". When NULL, no pdf device is opened or closed. This allows the user to work with an opened pdf (or other) device. When the file has an html file extension the output is an Rmarkdown report with the figures embedded in the html file.
 #' @param family Name of the family of parameters to plot, as given by a character vector or a regular expression. A family of parameters is considered to be any group of parameters with the same name but different numerical value between square brackets (as beta[1], beta[2], etc).
-#' @param plot character vector containing the names of the desired plots. By default (NULL), \code{ggmcmc()} plots \code{ggs_histogram()}, \code{ggs_density()}, \code{ggs_traceplot()}, \code{ggs_running()}, \code{ggs_compare_partial()}, \code{ggs_autocorrelation()}, \code{ggs_crosscorrelation()}, \code{ggs_Rhat()}, \code{ggs_geweke()} and \code{ggs_caterpillar()}.
+#' @param plot character vector containing the names of the desired plots. By default (NULL), \code{ggmcmc()} plots \code{ggs_histogram()}, \code{ggs_density()}, \code{ggs_traceplot()}, \code{ggs_running()}, \code{ggs_compare_partial()}, \code{ggs_autocorrelation()}, \code{ggs_crosscorrelation()}, \code{ggs_Rhat()}, \code{ggs_effective()}, \code{ggs_geweke()} and \code{ggs_caterpillar()}.
 #' @param param_page Numerical, number of parameters to plot for each page. Defaults to 5.
 #' @param width Width of the pdf display, in inches. Defaults to 7.
 #' @param height Height of the pdf display, in inches. Defaults to 10.
@@ -16,8 +16,10 @@
 #' @param ... Other options passed to the pdf device.
 #' @export
 #' @examples
+#'\dontrun{
 #' data(linear)
 #' ggmcmc(ggs(s))  # Directly from a coda object
+#'}
 ggmcmc <- function(D, file = "ggmcmc-output.pdf", family = NA, plot = NULL,
   param_page = 5, width = 7, height = 10, simplify_traceplot = NULL,
   dev_type_html = "png", ...) {
@@ -134,6 +136,10 @@ ggmcmc <- function(D, file = "ggmcmc-output.pdf", family = NA, plot = NULL,
       if (is.null(plot) | length(grep("Rhat", plot)) > 0) {
         cat("\n# Potential Scale Reduction Factors\n")
         cat(paste("```{r rhat, echo = FALSE, fig.height = ", height.lightly.extended, "}\nggs_Rhat(D)\n```\n\n", sep = ""))
+      }
+      if (is.null(plot) | length(grep("effective", plot)) > 0) {
+        cat("\n# Number of effective independent draws\n")
+        cat(paste("```{r effective, echo = FALSE, fig.height = ", height.lightly.extended, "}\nggs_effective(D)\n```\n\n", sep = ""))
       }
     }
 
@@ -326,6 +332,13 @@ ggmcmc <- function(D, file = "ggmcmc-output.pdf", family = NA, plot = NULL,
       if (is.null(plot) | length(grep("Rhat", plot)) > 0) {
         cat("Plotting Potential Scale Reduction Factors\n")
         print(ggs_Rhat(D))
+      }
+    }
+
+    if (attributes(D)$nChain > 1) {                         # only in case of multiple chains
+      if (is.null(plot) | length(grep("effective", plot)) > 0) {
+        cat("Plotting Number of effective independent draws\n")
+        print(ggs_effective(D))
       }
     }
 
