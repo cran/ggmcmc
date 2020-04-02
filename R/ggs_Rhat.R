@@ -1,6 +1,6 @@
 #' Dotplot of Potential Scale Reduction Factor (Rhat)
 #'
-#' Plot a dotplot of Potential Scale Reduction Factor (Rhat), proposed by Gelman and Rubin (1992). The version from the second edition of Bayesian Data Analysis (Gelman, Carlin, Stein and Rubin) is used, but the version used in the package "coda" can also be used (Brooks & Gelman 1998).
+#' Plot a dotplot of Potential Scale Reduction Factor (Rhat), proposed by Gelman and Rubin (1992). The version from the second edition of Bayesian Data Analysis (Gelman, Carlin, Stern and Rubin) is used, but the version used in the package "coda" can also be used (Brooks & Gelman 1998).
 #'
 #' Notice that at least two chains are required.
 #'
@@ -12,13 +12,14 @@
 #' @param family Name of the family of parameters to plot, as given by a character vector or a regular expression. A family of parameters is considered to be any group of parameters with the same name but different numerical value between square brackets (as beta[1], beta[2], etc).
 #' @param scaling Value of the upper limit for the x-axis. By default, it is 1.5, to help contextualization of the convergence. When 0 or NA, the axis are not scaled.
 #' @param greek Logical value indicating whether parameter labels have to be parsed to get Greek letters. Defaults to false.
-#' @param version_rhat Character variable with the name of the version of the potential scale reduction factor to use. Defaults to "BDA2", which refers to the second version of "bayesian Data Analysis (Gelman, Carlin, Stein and Rubin). The other available version is "BG98", which refers to Brooks & Gelman (1998) and is the one used in the "coda" package.
-#' @return A \code{ggplot} object.
+#' @param version_rhat Character variable with the name of the version of the potential scale reduction factor to use. Defaults to "BDA2", which refers to the second version of _Bayesian Data Analysis_ (Gelman, Carlin, Stern and Rubin). The other available version is "BG98", which refers to Brooks & Gelman (1998) and is the one used in the "coda" package.
+#' @param plot Logical value indicating whether the plot must be returned (the default) or a tidy dataframe with the results of the Rhat diagnostics per Parameter.
+#' @return A \code{ggplot} object, or a \code{tidy} data frame.
 #' @export
 #' @examples
 #' data(linear)
 #' ggs_Rhat(ggs(s))
-ggs_Rhat <- function(D, family = NA, scaling = 1.5, greek = FALSE, version_rhat = "BDA2") {
+ggs_Rhat <- function(D, family = NA, scaling = 1.5, greek = FALSE, version_rhat = "BDA2", plot = TRUE) {
   if (attributes(D)$nChains<2) {
     stop("At least two chains are required")
   }
@@ -116,17 +117,21 @@ ggs_Rhat <- function(D, family = NA, scaling = 1.5, greek = FALSE, version_rhat 
 
   # For parameters that do not vary, Rhat is Nan. Move it to NA
   BW$Rhat[is.nan(BW$Rhat)] <- NA
-  # Plot
-  f <- ggplot(BW, aes(x=Rhat, y=Parameter)) + geom_point() +
-    xlab(expression(hat("R"))) + ggtitle("Potential Scale Reduction Factors")
-  if (greek) {
-    f <- f + scale_y_discrete(labels = parse(text = as.character(BW$Parameter)))
+  # Plot or return calculations
+  if (plot) {
+    f <- ggplot(BW, aes(x=Rhat, y=Parameter)) + geom_point() +
+      xlab(expression(hat("R"))) + ggtitle("Potential Scale Reduction Factors")
+    if (greek) {
+      f <- f + scale_y_discrete(labels = parse(text = as.character(BW$Parameter)))
+    }
+    # If scaling, add the scale
+    if (!is.na(scaling)) {
+      # Use the maximum of Rhat if it is larger than the prespecified value
+      scaling <- ifelse(scaling > max(BW$Rhat, na.rm=TRUE), scaling, max(BW$Rhat, na.rm=TRUE))
+      f <- f + xlim(min(BW$Rhat, na.rm=TRUE), scaling)
+    }
+    return(f)
+  } else {
+    return(dplyr::select(BW, Parameter, Rhat))
   }
-  # If scaling, add the scale
-  if (!is.na(scaling)) {
-    # Use the maximum of Rhat if it is larger than the prespecified value
-    scaling <- ifelse(scaling > max(BW$Rhat, na.rm=TRUE), scaling, max(BW$Rhat, na.rm=TRUE))
-    f <- f + xlim(min(BW$Rhat, na.rm=TRUE), scaling)
-  }
-  return(f)
 }

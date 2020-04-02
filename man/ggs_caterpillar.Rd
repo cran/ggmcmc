@@ -4,9 +4,21 @@
 \alias{ggs_caterpillar}
 \title{Caterpillar plot with thick and thin CI}
 \usage{
-ggs_caterpillar(D, family = NA, X = NA, thick_ci = c(0.05, 0.95),
-  thin_ci = c(0.025, 0.975), line = NA, horizontal = TRUE,
-  model_labels = NULL, label = NULL, greek = FALSE, sort = TRUE)
+ggs_caterpillar(
+  D,
+  family = NA,
+  X = NA,
+  thick_ci = c(0.05, 0.95),
+  thin_ci = c(0.025, 0.975),
+  line = NA,
+  horizontal = TRUE,
+  model_labels = NULL,
+  label = NULL,
+  comparison = NULL,
+  comparison_separation = 0.2,
+  greek = FALSE,
+  sort = TRUE
+)
 }
 \arguments{
 \item{D}{Data frame whith the simulations or list of data frame with simulations. If a list of data frames with simulations is passed, the names of the models are the names of the objects in the list.}
@@ -26,6 +38,10 @@ ggs_caterpillar(D, family = NA, X = NA, thick_ci = c(0.05, 0.95),
 \item{model_labels}{Vector of strings that matches the number of models in the list. It is only used in case of multiple models and when the list of ggs objects given at \code{D} is not named. Otherwise, the names in the list are used.}
 
 \item{label}{Character value with the name of the variable that contains the labels displayed in the plot. Defaults to NULL, which corresponds to using the Parameter name or the Label in case par_labels is used in the ggs() object.}
+
+\item{comparison}{Character value with the name of the variable that contains the focus of the comparison. Defaults to NULL, which corresponds to no comparison. It is not expected to be used together with X.}
+
+\item{comparison_separation}{Numerical value with the separation between the dodged parameters. Defaults to 0.2.}
 
 \item{greek}{Logical value indicating whether parameter labels have to be parsed to get Greek letters. Defaults to false.}
 

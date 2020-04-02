@@ -4,9 +4,11 @@
 \name{y.binary}
 \alias{y.binary}
 \title{Values for the observed outcome of a binary logistic regression with fake data.}
-\format{A numeric vector containing the observed values of the outcome in the linear regression with fake data.}
+\format{
+A numeric vector containing the observed values of the outcome in the linear regression with fake data.
+}
 \usage{
-y.binary
+data(y.binary)
 }
 \description{
 A numeric vector containing the observed values (y) of the outcome of a logistic regression with fake data (y ~ dbern(mu); logit(mu) = theta[1] + theta[2] * X). The purpose of the dataset is only to show the possibilities of the ggmcmc package.

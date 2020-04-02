@@ -1,30 +1,30 @@
-## ----echo=FALSE, message=FALSE, warning=FALSE----------------------------
+## ----echo=FALSE, message=FALSE, warning=FALSE---------------------------------
 library(ggmcmc)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 library(ggmcmc)
 data(radon)
 s.radon.short <- radon$s.radon.short
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 S <- ggs(s.radon.short)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 S
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 str(S)
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 #  ggmcmc(S)
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 #  ggmcmc(S, file="model_simple-diag.pdf", param_page=2)
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 #  ggmcmc(S, plot=c("density", "running", "caterpillar"))
 
-## ---- eval=FALSE---------------------------------------------------------
+## ---- eval=FALSE--------------------------------------------------------------
 #  ggmcmc(S, file = "model_simple.html", dev_type_html = "svg")
 
 ## ----histogram, fig.cap='Histogram (ggs\\_histogram())', fig.width=6, fig.height=6, fig.margin=TRUE, warning=FALSE----
@@ -60,7 +60,7 @@ P <- data.frame(
   Label=c("Intercept (sd)", "Covariate (sd)", "Outcome (sd)"))
 ggs_density(ggs(radon$s.radon, par_labels=P, family="sigma"))
 
-## ----caterpillar_preparation, warning=FALSE------------------------------
+## ----caterpillar_preparation, warning=FALSE-----------------------------------
 L.radon.intercepts <- plab("alpha", list(County = radon$counties$County))
 head(L.radon.intercepts)
 S.full <- ggs(radon$s.radon, par_labels=L.radon.intercepts, family="^alpha")
@@ -74,10 +74,10 @@ Z <- data.frame(
   value=radon$counties$uranium)
 ggs_caterpillar(ggs(radon$s.radon, family="^alpha"), X=Z, horizontal=FALSE)
 
-## ----ci------------------------------------------------------------------
+## ----ci-----------------------------------------------------------------------
 ci(S)
 
-## ----sample_mu-----------------------------------------------------------
+## ----sample_mu----------------------------------------------------------------
 data(linear) # brings 's.y.rep', 'y' and 's'
 S.y.rep <- ggs(s.y.rep)
 y.observed <- y
@@ -88,7 +88,7 @@ ggs_ppmean(S.y.rep, outcome=y.observed)
 ## ----ppsd, fig.width=4, fig.height=4, fig.margin=TRUE, fig.cap='Posterior predictive standard deviations against the sample standard deviation (ggs\\_ppsd()).'----
 ggs_ppsd(S.y.rep, outcome=y.observed)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 data(binary)
 S.binary <- ggs(s.binary, family="mu")
 
