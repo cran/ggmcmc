@@ -96,12 +96,20 @@ gl_unq <- function (n, k, labels=1:n) {
 #' @param D Data frame whith the simulations.
 #' @param thick_ci Vector of length 2 with the quantiles of the thick band for the credible interval
 #' @param thin_ci Vector of length 2 with the quantiles of the thin band for the credible interval
-#' @return A data frame tbl with the Parameter names and 5 variables with the limits of the credibal intervals (thin and thick), ready to be used to produce caterpillar plots.
+#' @return A data frame tibble with the Parameter names and 5 variables with the limits of the credibal intervals (thin and thick), ready to be used to produce caterpillar plots.
 #' @export
 #' @examples
 #' data(linear)
 #' ci(ggs(s))
 ci <- function (D, thick_ci=c(0.05, 0.95), thin_ci=c(0.025, 0.975)) {
+  # Ready for dplyr >= 1.0
+  #X <- D %>%
+  #  dplyr::group_by(Parameter) %>%
+  #  dplyr::summarize(qs = c("low", "Low", "median", "High", "high"),
+  #                   q = quantile(value, prob = c(thin_ci[1], thick_ci[1], 0.5, thick_ci[2], thin_ci[2]))) %>%
+  #  tidyr::spread(qs, q) %>%
+  #  dplyr::select(Parameter, low, Low, median, High, high)
+  #
   # See ggs_autocorrelation.R
   # No way to make the following use summarize(), as of dplyr 0.3
   # https://github.com/hadley/dplyr/issues/154
@@ -109,12 +117,12 @@ ci <- function (D, thick_ci=c(0.05, 0.95), thin_ci=c(0.025, 0.975)) {
   q <- data.frame(
     qs=c("low", "Low", "median", "High", "high"),
     q=c(thin_ci[1], thick_ci[1], 0.5, thick_ci[2], thin_ci[2]))
-  X <- D %>%
+  X <- suppressMessages(D %>%
     dplyr::group_by(Parameter) %>%
     dplyr::do(data.frame(qs=q$qs, q=quantile(.$value, prob=q$q))) %>%
     dplyr::ungroup() %>%
     tidyr::spread(qs, q) %>%
-    dplyr::select(Parameter, low, Low, median, High, high)
+    dplyr::select(Parameter, low, Low, median, High, high))
   # Recover the rest of the variables that can come with the par_labels
   if (dim(D)[2] > 4) {
     X <- suppressWarnings(dplyr::left_join(X, dplyr::distinct(dplyr::select(D, -Iteration, -Chain, -value)), by="Parameter"))
@@ -129,7 +137,7 @@ ci <- function (D, thick_ci=c(0.05, 0.95), thin_ci=c(0.025, 0.975)) {
 #' @param parameter.name A character vector of length one with the name of the variable (family) without subscripts. Usually, it refers to a Greek letter.
 #' @param match A named list with the variable labels and the values of the factor corresponding to the dimension they map to. The order of the list matters, as ggmcmc assumes that the first dimension corresponds to the first element in the list, and so on.
 #' @param subscripts An optional character with the letters that correspond to each of the dimensions of the family of parameters. By default it uses not very informative names "dim.1", "dim.2", etc... It usually corresponds to the "i", "j", ... subscripts in classical textbooks, but is recommended to be closer to the subscripts given in the sampling software.
-#' @return A data frame tbl with the Parameter names and its match with meaningful variable Labels. Also the intermediate variables are passed to make it easier to work with the samples using meaningful variable names.
+#' @return A data frame tibble with the Parameter names and its match with meaningful variable Labels. Also the intermediate variables are passed to make it easier to work with the samples using meaningful variable names.
 #' @export
 #' @examples
 #' data(radon)
@@ -177,7 +185,7 @@ plab <- function (parameter.name, match, subscripts = NULL) {
   full.text <- paste0(full.text, " %>% dplyr::mutate(", par.text, ")")
   full.text <- paste0(full.text, var.text)
   full.text <- paste0(full.text, " %>% dplyr::mutate(", lab.text, ")")
-  full.text <- paste0(full.text, " %>% dplyr::tbl_df()")
+  full.text <- paste0(full.text, " %>% dplyr::as_tibble()")
   full.text <- paste0(full.text, " %>% dplyr::mutate(Parameter = factor(Parameter))")
   full.text <- paste0(full.text, " %>% dplyr::mutate(Label = factor(Label))")
 
